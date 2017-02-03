@@ -1,0 +1,43 @@
+
+-
+into raspberry PI 3
+
+cd ~/Documents/code/education_robotics_ws
+source devel/setup.bash
+export ROS_IP=192.168.0.210
+
+into PC:
+
+source devel/setup.bash
+export ROS_IP=192.168.0.104
+export ROS_MASTER_URI=http://192.168.0.210:11311
+
+- root access to GPIO for any executable:
+
+sudo chown root:root devel/lib/raspberry_robot/robot_twist_subscriber
+sudo chmod a+rx devel/lib/raspberry_robot/robot_twist_subscriber
+sudo chmod u+s devel/lib/raspberry_robot/robot_twist_subscriber
+
+sudo chown root:root devel/lib/raspberry_robot/robot_servo_controller
+sudo chmod a+rx devel/lib/raspberry_robot/robot_servo_controller
+sudo chmod u+s devel/lib/raspberry_robot/robot_servo_controller
+
+- use piscope
+
+export PIGPIO_ADDR=192.168.0.210
+piscope
+
+- set GCC 5 for ubuntu 16.04
+export CC=/usr/bin/gcc-5
+export CXX=/usr/bin/g++-5
+
+- Clean start up
+
+sudo killall -9 pigpiod # kill the daemon
+sudo rm /var/run/pigpio.pid
+
+- if gazebo does not run, kill all gzserver
+sudo killall gzserver gzclient
+
+- Allow any user to use joystick
+sudo chmod a+rw /dev/input/js0

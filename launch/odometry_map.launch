@@ -1,0 +1,49 @@
+<launch>
+    <node pkg="image_proc" type="image_proc" name="image_proc" >
+        <remap from="/camera_info" to="/robot_map_camera/camera_info" />
+        <remap from="/image_raw" to="/robot_map_camera/image_raw" />
+    </node>
+
+    <node  name="robot_map_camera" pkg="usb_cam" type="usb_cam_node" output="screen" >
+        <param name="video_device" value="/dev/video1" />
+        <param name="image_width" value="640" />
+        <param name="image_height" value="480" />
+        <param name="pixel_format" value="yuyv" />
+        <param name="camera_frame_id" value="robot_map_camera" />
+        <param name="io_method" value="mmap"/>
+        <param name="framerate" value="30"/>
+    </node>
+
+    <arg name="boards_config" default="$(find raspberry_robot)/config/aruco_boards/boards.yml" />
+    <arg name="boards_directory" default="$(find raspberry_robot)config/aruco_boards/" />
+
+    <node  pkg="ar_sys" type="multi_boards" name="ar_sys_boards" output="screen" >
+        <remap from="/camera_info" to="/robot_map_camera/camera_info" />
+        <remap from="/image" to="/image_rect_color" />
+
+        <param name="image_is_rectified" type="bool" value="true"/>
+        <param name="boards_config" type="string" value="$(arg boards_config)"/>
+        <param name="boards_directory" type="string" value="$(arg boards_directory)"/>
+        <param name="draw_markers" type="bool" value="false" />
+        <param name="draw_markers_cube" type="bool" value="false" />
+        <param name="draw_markers_axis" type="bool" value="false" />
+        <param name="publish_tf" value="false" />
+    </node>
+
+
+    <arg name="map_path" default="$(find raspberry_robot)/config/map.yml" />
+    <arg name="digital_filter_change_rate" default="0.5" />
+    <arg name="rviz_config_path" default="$(find raspberry_robot)/config/rviz_ar_sys_odometry.rviz" />
+
+    <node pkg="raspberry_robot" type="aruco_system_viewer" name="aruco_system_viewer" output="screen">
+        <remap from="/transform" to="/ar_sys_boards/transform" />
+
+        <param name="map_path" type="string" value="$(arg map_path)"/>
+        <param name="digital_filter_change_rate" type="double" value="$(arg digital_filter_change_rate)"/>
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_config_path)"/>
+
+
+
+</launch>
