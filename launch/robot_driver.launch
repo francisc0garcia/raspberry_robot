@@ -1,0 +1,8 @@
+<launch>
+    <node pkg="raspberry_robot" type="robot_servo_controller" name="robot_servo_controller" output="screen">
+        <param name="max_pwm" type="double" value="255"/>
+        <param name="scaling_pwm" type="double" value="1"/>
+        <param name="rate" type="double" value="100"/>
+        <param name="topic_name" type="string" value="/cmd_vel"/>
+    </node>
+</launch>

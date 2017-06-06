@@ -23,7 +23,6 @@ double L_p = 0.6655;
 double right = 0;
 double left = 0;
 
-
 // Reset motors: put zero all outputs
 void resetPWM(){
     //gpioWrite(M1_PWM, PI_LOW);
@@ -41,7 +40,14 @@ void resetPWM(){
     usleep(20000);
 }
 
-void move_motor_left(int direction){
+void move_motor_left(double left){
+    int direction = 0;
+    if (left > 0){
+        direction = -1;
+    } else if (left < 0){
+        direction = 1;
+    }
+
     switch(direction) {
         case 1: // 1.3 ms ON - 20 ms OFF
             gpioWrite(M1_PWM, PI_HIGH);
@@ -58,19 +64,24 @@ void move_motor_left(int direction){
             usleep(20000);
             break;
         case 0: // 1.5 ms ON - 20 ms OFF
+            // if motor doesn't stop, please calibrate it using physical pot behind motor
             gpioWrite(M1_PWM, PI_HIGH);
             // + 100 us from RPI3 delay
             usleep(1400);
             gpioWrite(M1_PWM, PI_LOW);
             usleep(20000);
-            break;
-        default:
-            gpioWrite(M1_PWM, PI_LOW);
             break;
     }
 }
 
-void move_motor_right(int direction){
+void move_motor_right(double right){
+    int direction = 0;
+    if (right > 0){
+        direction = 1;
+    } else if (right < 0){
+        direction = -1;
+    }
+
     switch(direction) {
         case 1: // 1.3 ms ON - 20 ms OFF
             gpioWrite(M2_PWM, PI_HIGH);
@@ -87,14 +98,12 @@ void move_motor_right(int direction){
             usleep(20000);
             break;
         case 0: // 1.5 ms ON - 20 ms OFF
+            // if motor doesn't stop, please calibrate it using physical pot behind motor
             gpioWrite(M2_PWM, PI_HIGH);
             // + 100 us from RPI3 delay
             usleep(1400);
             gpioWrite(M2_PWM, PI_LOW);
             usleep(20000);
-            break;
-        default:
-            gpioWrite(M2_PWM, PI_LOW);
             break;
     }
 }
@@ -104,37 +113,8 @@ void TwistCallback(geometry_msgs::Twist::ConstPtr Twist_temp)
     double dx = Twist_temp->linear.x; // vel->linear.x;
     double dr = Twist_temp->angular.z; // vel->angular.z;
 
-    right = ((100/15)/(2*radius) ) * (dx + L_p * dr)  ;
-    left = ((100/15)/(2*radius) ) * (dx - L_p * dr)  ;
-
-    /*
-    if(right > 0){
-        pwm_R = (int)(max_pwm * right);
-        if(pwm_R > max_pwm) pwm_R = max_pwm;
-
-        gpioWrite(M1_DIR, PI_LOW);
-        gpioPWM(M1_PWM, pwm_R);
-    }else{
-        pwm_R = (int)(-1 * max_pwm * right);
-        if(pwm_R > max_pwm) pwm_R = max_pwm;
-
-        gpioWrite(M1_DIR, PI_HIGH);
-        gpioPWM(M1_PWM, pwm_R);
-    }
-
-    if(left > 0){
-        pwm_L = (int)(max_pwm * left);
-        if(pwm_L > max_pwm) pwm_L = max_pwm;
-
-        gpioWrite(M2_DIR, PI_LOW);
-        gpioPWM(M2_PWM, pwm_R);
-    }else{
-        pwm_L = (int)(-1 * max_pwm * left);
-        if(pwm_L > max_pwm) pwm_L = max_pwm;
-
-        gpioWrite(M2_DIR, PI_HIGH);
-        gpioPWM(M2_PWM, pwm_R);
-    }*/
+    right = ((100/15)/(2*radius) ) * (dx + L_p * dr);
+    left = ((100/15)/(2*radius) ) * (dx - L_p * dr);
 }
 
 int main(int argc, char **argv)
@@ -167,25 +147,12 @@ int main(int argc, char **argv)
     pnode.getParam("rate", rate);
 
     ros::Subscriber sub = n.subscribe(topic_name, 1, TwistCallback);
-
     ros::Rate r(rate);
 
     while ( ros::ok() )
     {
-        if (right > 0){
-            move_motor_left(1);
-            move_motor_right(-1);
-        }
-
-        if (right < 0){
-            move_motor_left(-1);
-            move_motor_right(1);
-        }
-
-        if (right == 0){
-            move_motor_left(0);
-            move_motor_right(0);
-        }
+        move_motor_right(right);
+        move_motor_left(left);
 
         ros::spinOnce();
     }
