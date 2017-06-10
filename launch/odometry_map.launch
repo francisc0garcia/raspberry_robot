@@ -1,17 +1,22 @@
 <launch>
-    <node pkg="image_proc" type="image_proc" name="image_proc" >
-        <remap from="/camera_info" to="/robot_map_camera/camera_info" />
-        <remap from="/image_raw" to="/robot_map_camera/image_raw" />
+    <node pkg="image_proc" type="image_proc" name="image_proc" ns="robot_map_camera" >
     </node>
 
-    <node  name="robot_map_camera" pkg="usb_cam" type="usb_cam_node" output="screen" >
-        <param name="video_device" value="/dev/video1" />
-        <param name="image_width" value="640" />
-        <param name="image_height" value="480" />
-        <param name="pixel_format" value="yuyv" />
+    <node  name="robot_map_camera" pkg="usb_cam" type="usb_cam_node" output="log" >
+        <param name="video_device" value="/dev/video0" />
+        <param name="image_width" value="1920" />
+        <param name="image_height" value="1080" />
+        <param name="pixel_format" value="mjpeg" />
         <param name="camera_frame_id" value="robot_map_camera" />
         <param name="io_method" value="mmap"/>
         <param name="framerate" value="30"/>
+
+        <remap from="/usb_cam/camera_info" to="/robot_map_camera/camera_info" />
+        <remap from="/usb_cam/image_raw" to="/robot_map_camera/image_raw" />
+
+        <param name="camera_info_url"
+               value="file://$(find raspberry_robot)/config/camera_info/camera_calibration_gopro_1920_1080.yaml"/>
+
     </node>
 
     <arg name="boards_config" default="$(find raspberry_robot)/config/aruco_boards/boards.yml" />
@@ -19,7 +24,7 @@
 
     <node  pkg="ar_sys" type="multi_boards" name="ar_sys_boards" output="screen" >
         <remap from="/camera_info" to="/robot_map_camera/camera_info" />
-        <remap from="/image" to="/image_rect_color" />
+        <remap from="/image" to="/robot_map_camera/image_rect" />
 
         <param name="image_is_rectified" type="bool" value="true"/>
         <param name="boards_config" type="string" value="$(arg boards_config)"/>
@@ -27,9 +32,8 @@
         <param name="draw_markers" type="bool" value="false" />
         <param name="draw_markers_cube" type="bool" value="false" />
         <param name="draw_markers_axis" type="bool" value="false" />
-        <param name="publish_tf" value="false" />
+        <param name="publish_tf" value="true" />
     </node>
-
 
     <arg name="map_path" default="$(find raspberry_robot)/config/map.yml" />
     <arg name="digital_filter_change_rate" default="0.5" />
