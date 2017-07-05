@@ -1,0 +1,10 @@
+<launch>
+
+    <node name="republish" type="republish" pkg="image_transport" output="screen"
+          args="compressed in:=/camera/image raw out:=/camera/image_raw" />
+
+    <node name="camera_calibration" pkg="camera_calibration" type="cameracalibrator.py" output="screen"
+          args="--size 8x6 --square 0.108 --no-service-check image:=/camera/image_raw camera:=/camera"
+    />
+
+</launch>

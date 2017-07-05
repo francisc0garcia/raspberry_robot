@@ -1,0 +1,74 @@
+<launch>
+
+    <env name="GAZEBO_MODEL_PATH" value="$(find raspberry_robot)/models"/>
+
+    <node name="image_proc" pkg="image_proc" type="image_proc" ns="camera"/>
+
+    <node name="republish" type="republish" pkg="image_transport" output="screen"
+          args="compressed in:=/camera/image raw out:=/camera/image_raw" />
+
+    <!-- Robot controller -->
+    <node name="robot_move_example" pkg="raspberry_robot" type="robot_to_interactive_marker.py" output="screen"  />
+
+    <!-- Add Interactive Waypoint -->
+    <node pkg="raspberry_robot" type="waypoint_interactive_publisher.py" name="waypoint_interactive_publisher">
+        <param name="rate" type="double" value="20"/>
+        <param name="current_waypoint_position_x" type="double" value="0.0"/>
+        <param name="current_waypoint_position_y" type="double" value="0.0"/>
+    </node>
+
+    <!-- Load Gazebo -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find raspberry_robot)/worlds/gazebo_dynamics.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="false"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <!-- Visualize gazebo model into RVIZ -->
+    <arg name="frequency" default="5"/>
+    <node name="static_tf_pub_world_to_gazebo_world" pkg="tf" type="static_transform_publisher"
+          args="0 0 0  0 0 0 1 world gazebo_world 100"/>
+
+    <node name="gazebo2rviz" pkg="raspberry_robot" type="gazebo2rviz.py">
+        <param name="ignore_submodels_of" value="" type="str"/>
+        <param name="rate" value="20"/>
+    </node>
+
+    <arg name="boards_config" default="$(find raspberry_robot)/config/aruco_boards/boards.yml" />
+    <arg name="boards_directory" default="$(find raspberry_robot)config/aruco_boards/" />
+
+    <node  pkg="ar_sys" type="multi_boards" name="ar_sys_boards" output="log" >
+        <remap from="/camera_info" to="/camera/camera_info" />
+        <!--<remap from="/image" to="/camera/image_raw" />-->
+        <remap from="/image" to="/camera/image_rect" />
+
+        <param name="image_is_rectified" type="bool" value="false"/>
+        <param name="boards_config" type="string" value="$(arg boards_config)"/>
+        <param name="boards_directory" type="string" value="$(arg boards_directory)"/>
+        <param name="draw_markers" type="bool" value="false" />
+        <param name="draw_markers_cube" type="bool" value="false" />
+        <param name="draw_markers_axis" type="bool" value="false" />
+        <param name="publish_tf" value="true" />
+    </node>
+
+    <arg name="map_path" default="$(find raspberry_robot)/config/map.yml" />
+    <arg name="digital_filter_change_rate" default="0.5" />
+    <arg name="rviz_config_path" default="$(find raspberry_robot)/config/rviz_config_AG_robotic.rviz" />
+
+    <node pkg="raspberry_robot" type="aruco_system_viewer" name="aruco_system_viewer" output="log">
+        <remap from="/transform" to="/ar_sys_boards/transform" />
+        <param name="marker_scale" type="double" value="8"/>
+        <param name="map_path" type="string" value="$(arg map_path)"/>
+        <param name="digital_filter_change_rate" type="double" value="$(arg digital_filter_change_rate)"/>
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_config_path)"/>
+
+    <!-- Launch RQT and RVIZ -->
+    <node name="custom_rqt_perspective" pkg="rqt_gui" type="rqt_gui" respawn="true"
+          args="--perspective-file  $(find raspberry_robot)/config/rqt_AG_Robotic.perspective" />
+
+</launch>

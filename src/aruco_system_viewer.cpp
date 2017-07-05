@@ -60,7 +60,7 @@ private:
     std::map<std::string, board_t> boards_map;
     std::map<std::string, relative_board_t> relativeBoards_map;
     std::map<std::string, camera_t> cameras_map;
-    double digital_filter_change_rate;
+    double digital_filter_change_rate, marker_scale;
 
     ros::Subscriber transform_sub;
     ros::Publisher transform_pub;
@@ -79,6 +79,8 @@ public:
 
         nh.param<std::string>("map_path", map_path, "map.yml");
         nh.param<double>("digital_filter_change_rate", digital_filter_change_rate, 0.5);
+        nh.param<double>("marker_scale", marker_scale, 0.5);
+
 
         readFromFile(map_path.c_str());
         ROS_INFO("ArSys node started with boards map: %s", map_path.c_str());
@@ -293,11 +295,15 @@ public:
         visualization_msgs::Marker visualMarker;
         tf::poseTFToMsg (markerPose, visualMarker.pose);
 
-        visualMarker.pose.position.z = 0;
+
 
         visualMarker.header.frame_id = stampedTransform.frame_id_;
         visualMarker.header.stamp = transformMsg.header.stamp;
         visualMarker.id = boards_map[transformMsg.child_frame_id].uid;
+
+        visualMarker.pose.position.x *= this->marker_scale;
+        visualMarker.pose.position.y *= this->marker_scale;
+        visualMarker.pose.position.z = 0;
 
         visualMarker.scale.x = 1.0 * VISUAL_MARKER_SIZE;
         visualMarker.scale.y = 1.0 * VISUAL_MARKER_SIZE;
