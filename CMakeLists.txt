@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
         )
 
 catkin_package(
-        INCLUDE_DIRS include
+        # INCLUDE_DIRS include
         LIBRARIES raspberry_robot aruco aruco_msgs
         CATKIN_DEPENDS roscpp rospy std_msgs
         #  DEPENDS system_lib
@@ -28,7 +28,7 @@ catkin_package(
 find_library(pigpio REQUIRED)
 
 include_directories(
-        include
+        # include
         ${catkin_INCLUDE_DIRS}
         ${ARUCO_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIR}
